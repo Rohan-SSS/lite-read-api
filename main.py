@@ -1,10 +1,56 @@
 from fastapi import FastAPI, HTTPException
 from crud.crud_novel import *
+from crud.crud_volume import *
 
 app = FastAPI()
 
+
+### VOLUME
+# create volume
+@app.post("/novel/{novel_alt}/volume/", response_model=Volume)
+async def create_volume_endpoint(novel_alt: str, volume: Volume):
+    novel = db.novelCollection.find_one({"alt": novel_alt})
+    if not novel:
+        raise HTTPException(status_code=404, detail="Novel not found")
+
+    created_volume = create_volume(str(novel["_id"]), volume)
+    return created_volume
+
+# read volume by novel's alt and volumeNumber
+@app.get("/novel/{novel_alt}/volume/{volumeNumber}", response_model=VolumeInDB)
+async def read_volume_by_novel_and_volume_endpoint(novel_alt: str, volumeNumber: int):
+    volume = read_volume_by_novel_and_volume(novel_alt, volumeNumber)
+    if volume:
+        volume["_id"] = str(volume["_id"])
+        volume["novelId"] = str(volume["novelId"])
+        return volume
+    raise HTTPException(status_code=404, detail="Volume not found")
+
+# update volume by novel's alt and volumeNumber
+@app.put("/novel/{novel_alt}/volume/{volumeNumber}", response_model=Volume)
+async def update_volume_by_novel_and_volume_endpoint(novel_alt: str, volumeNumber: int, volume: Volume):
+    updated = update_volume_by_novel_and_volume(novel_alt, volumeNumber, volume)
+    if updated:
+        updated_volume = read_volume_by_novel_and_volume(novel_alt, volumeNumber)
+        updated_volume["novelId"] = str(updated_volume["novelId"])
+        updated_volume["_id"] = str(updated_volume["_id"])
+        return updated_volume
+    raise HTTPException(status_code=404, detail="Volume not found or couldn't be updated")
+
+# delete volume by novel's alt and volumeNumber
+@app.delete("/novel/{novel_alt}/volume/{volumeNumber}", response_model=dict)
+async def delete_volume_by_novel_and_volume_endpoint(novel_alt: str, volumeNumber: int):
+    deleted = delete_volume_by_novel_and_volume(novel_alt, volumeNumber)
+    if deleted:
+        return {"status": "success", "message": f"Volume {volumeNumber} of Novel {novel_alt} deleted."}
+    raise HTTPException(status_code=404, detail="Volume not found or couldn't be deleted")
+
+
+
+
+### NOVEL
 # create novel
-@app.post("/novel/", response_model=NovelInDB)
+@app.post("/novel/", response_model=Novel)
 async def create_novel_endpoint(novel: Novel):
     created_novel = create_novel(novel)
     return created_novel
@@ -18,7 +64,7 @@ async def read_novel_by_id_endpoint(novel_id: str):
     raise HTTPException(status_code=404, detail="Resource not found")
 
 # read novel by alt (slugified title)
-@app.get("/novel/{alt}", response_model=NovelInDB)
+@app.get("/novel/{alt}", response_model=Novel)
 async def read_novel_by_alt_endpoint(alt: str):
     novel = read_novel_by_alt(alt)
     if novel:
@@ -26,7 +72,7 @@ async def read_novel_by_alt_endpoint(alt: str):
     raise HTTPException(status_code=404, detail="Resource not found")
 
 # update novel by alt
-@app.put("/novel/alt/{alt}", response_model=NovelInDB)
+@app.put("/novel/{alt}", response_model=Novel)
 async def update_novel_by_alt_endpoint(alt: str, novel: Novel):
     updated = update_novel_by_alt(alt, novel)
     if updated:
@@ -35,109 +81,9 @@ async def update_novel_by_alt_endpoint(alt: str, novel: Novel):
     raise HTTPException(status_code=404, detail="Resource not found or couldn't be updated")
 
 # delete novel by alt
-@app.delete("/novel/alt/{alt}", response_model=dict)
+@app.delete("/novel/{alt}", response_model=dict)
 async def delete_novel_by_alt_endpoint(alt: str):
     deleted = delete_novel_by_alt(alt)
     if deleted:
         return {"status": "success", "message": f"Novel {alt} deleted."}
     raise HTTPException(status_code=404, detail="Resource not found or couldn't be deleted")
-
-
-
-
-
-
-
-
-
-# from fastapi import FastAPI
-# from pydantic import BaseModel
-# from fastapi.middleware.cors import CORSMiddleware
-# from typing import Optional, List
-# import time
-
-# app = FastAPI()
-
-# origins = ['http://localhost:3000']
-
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=origins,
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
-
-# class Message(BaseModel):
-#     message: str
-
-# @app.post("/api/chat")
-# async def chat_endpoint(message: Message):
-#     time.sleep(3)
-#     return {"reply": f"Mock response for: {message.message}"}
-
-# # Sample chapter data structure
-# chapter_data = {
-#     1: {
-#         "pages": {
-#             1: {
-#                 "content": "Summary of page 1-3",
-#                 "pageRange": "1-3"
-#             },
-#             2: {
-#                 "content": "Summary of page 4-6",
-#                 "pageRange": "4-6"
-#             },
-#             3: {
-#                 "content": "Summary of page 7-9",
-#                 "pageRange": "7-9"
-#             }
-#         }
-#     },
-#     2: {
-#         "pages": {
-#             4: {
-#                 "content": "Summary of page 10-12",
-#                 "pageRange": "10-12"
-#             },
-#             5: {
-#                 "content": "Summary of page 13-15",
-#                 "pageRange": "13-15"
-#             }
-#             # ... Add more chapters as needed
-#         }
-#     }
-# }
-
-# @app.get("/api/chapter-data")
-# def get_chapter_data(page: int = 1):
-#     for chapter, details in chapter_data.items():
-#         if page in details["pages"]:
-#             return {
-#                 "chapter": chapter,
-#                 "content": details["pages"][page]["content"],
-#                 "pageRange": details["pages"][page]["pageRange"]
-#             }
-#     return {
-#         "chapter": "Unknown",
-#         "content": "Content not found",
-#         "pageRange": "Unknown"
-#     }
-
-# @app.get("/api/pages", response_model=List[int])
-# def get_pages():
-#     pages = []
-#     for details in chapter_data.values():
-#         pages.extend(details["pages"].keys())
-#     return pages
-
-# @app.get("/api/story")
-# def get_story(page: int = 1):
-#     for chapter, details in chapter_data.items():
-#         if page in details["pages"]:
-#             return {
-#                 "text": details["pages"][page]["content"]
-#             }
-#     return {
-#         "text": "Content not found for this page."
-#     }

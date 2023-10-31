@@ -1,11 +1,17 @@
+### NOTE
+# For admin controls a different api needed
+# update needs all fields
+
+
 from pydantic import BaseModel
 from database import db
 from bson import ObjectId
 
-### 65402f56b0ed2cc479a04653
+###
 import re
 from slugify import slugify
 
+# db schemas
 class Novel(BaseModel):
     title: str
     noOfVolumes: int
@@ -23,8 +29,8 @@ def create_novel(novel: Novel):
     novel_dict = novel.dict()
     novel_dict["alt"] = alt_value
     result = db.novelCollection.insert_one(novel_dict)
-    novel_dict["_id"] = str(result.inserted_id)  # Convert ObjectId to string
-    return novel_dict  # Return the entire novel document
+    novel_dict["_id"] = str(result.inserted_id)
+    return novel_dict
 
 # read novel by MongoDB _id
 def read_novel_by_id(novel_id: str):
