@@ -12,6 +12,7 @@ class Volume(BaseModel):
 class VolumeInDB(Volume):
     _id: str
 
+
 # create volume
 def create_volume(novelId: str, volume: Volume):
     volume_dict = volume.dict()

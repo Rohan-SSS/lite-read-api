@@ -1,10 +1,8 @@
-
 ObjectId = None
 
 novel_collection = {
   "_id": ObjectId("someId1"),
   "title": "novelTitle",
-  "novelId": "number",
   "noOfVolumes": "number",
   "imageURL":"link",
   "alt":"novelTitleSluged",
