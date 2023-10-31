@@ -2,8 +2,55 @@ from fastapi import FastAPI, HTTPException
 from crud.crud_novel import *
 from crud.crud_volume import *
 from crud.crud_chapter import *
+from crud.crud_page import *
 
 app = FastAPI()
+
+
+### PAGE
+# create page
+@app.post("/novel/{novel_alt}/volume/{volumeNumber}/chapter/{chapterNumber}/page", response_model=Page)
+async def create_page_endpoint(novel_alt: str, volumeNumber: int, chapterNumber: int, page: Page):
+    novel = db.novelCollection.find_one({"alt": novel_alt})
+    if not novel:
+        raise HTTPException(status_code=404, detail="Novel not found")
+    volume = db.volumeCollection.find_one({"novelId": ObjectId(novel["_id"]), "volumeNumber": volumeNumber})
+    if not volume:
+        raise HTTPException(status_code=404, detail="Volume not found")
+    chapter = db.chapterCollection.find_one({"volumeId": volume["_id"], "chapterNumber": chapterNumber})
+    if not chapter:
+        raise HTTPException(status_code=404, detail="Chapter not found")
+    created_page = create_page(str(chapter["_id"]), page)
+    return created_page
+
+# read page
+@app.get("/novel/{novel_alt}/volume/{volumeNumber}/chapter/{chapterNumber}/page/{pageNumber}", response_model=PageInDB)
+async def read_page_by_id_endpoint(novel_alt: str, volumeNumber:int, chapterNumber:int, pageNumber:int):
+    page = read_page_by_id(novel_alt, volumeNumber, chapterNumber, pageNumber)
+    if page:
+        page["_id"] = str(page["_id"])
+        page["chapterId"] = str(page["chapterId"])
+        return page
+    raise HTTPException(status_code=404, detail="Page not found")
+
+# update page
+@app.put("/novel/{novel_alt}/volume/{volumeNumber}/chapter/{chapterNumber}/page/{pageNumber}", response_model=Page)
+async def update_page_by_id_endpoint(novel_alt:str, volumeNumber:int, chapterNumber:int, pageNumber:int, page:Page):
+    updated = update_page_by_id(novel_alt, volumeNumber, chapterNumber, pageNumber, page)
+    if updated:
+        updated_page = read_page_by_id(novel_alt, volumeNumber, chapterNumber, pageNumber)
+        updated_page["chapterId"] = str(updated_page["chapterId"])
+        updated_page["_id"] = str(updated_page["_id"])
+        return updated_page
+    raise HTTPException(status_code=404, detail="Page not found or couldn't be updated")
+
+# delete page
+@app.delete("/novel/{novel_alt}/volume/{volumeNumber}/chapter/{chapterNumber}/page/{pageNumber}", response_model=dict)
+async def delete_page_by_id_endpoint(novel_alt:str, volumeNumber:int, chapterNumber:int, pageNumber:int):
+    deleted = delete_page_by_id(novel_alt, volumeNumber, chapterNumber, pageNumber)
+    if deleted:
+        return {"status": "success", "message": f"Page {pageNumber} of Chapter {chapterNumber} in Volume {volumeNumber} of Novel {novel_alt} deleted."}
+    raise HTTPException(status_code=404, detail="Page not found or couldn't be deleted")
 
 
 ### CHAPTER
