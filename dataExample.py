@@ -27,8 +27,6 @@ chpaters_volume={
 pages_collection={
   "_id": ObjectId("someId4"),
   "chapterId": ObjectId("someId3"),
-  "pages": {
-    "1": "V2 C1 Page 1 content ...",
-    "2": "V2 C1 Page 2 content ..."
-  }
+  "pageNumber":"number",
+  "content":"content"
 }
