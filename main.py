@@ -1,8 +1,52 @@
 from fastapi import FastAPI, HTTPException
 from crud.crud_novel import *
 from crud.crud_volume import *
+from crud.crud_chapter import *
 
 app = FastAPI()
+
+
+### CHAPTER
+# create chapter
+@app.post("/novel/{novel_alt}/volume/{volumeNumber}/chapter", response_model=Chapter)
+async def create_chapter_endpoint(novel_alt: str, volumeNumber: int, chapter: Chapter):
+    novel = db.novelCollection.find_one({"alt": novel_alt})
+    if not novel:
+        raise HTTPException(status_code=404, detail="Novel not found")
+    volume = db.volumeCollection.find_one({"novelId": ObjectId(novel["_id"]), "volumeNumber": volumeNumber})
+    if not volume:
+        raise HTTPException(status_code=404, detail="Volume not found")
+    created_chapter = create_chapter(str(volume["_id"]), chapter)
+    return created_chapter
+
+# read chapter
+@app.get("/novel/{novel_alt}/volume/{volumeNumber}/chapter/{chapterNumber}", response_model=ChapterInDB)
+async def read_chapter_by_id_endpoint(novel_alt: str, volumeNumber:int, chapterNumber:int):
+    chapter = read_chapter_by_chapter_id(novel_alt, volumeNumber, chapterNumber)
+    if chapter:
+        chapter["_id"] = str(chapter["_id"])
+        chapter["volumeId"] = str(chapter["volumeId"])
+        return chapter
+    raise HTTPException(status_code=404, detail="Resource not found")
+
+# update chapter
+@app.put("/novel/{novel_alt}/volume/{volumeNumber}/chapter/{chapterNumber}", response_model=Chapter)
+async def update_chapter_by_id_endpoint(novel_alt:str, volumeNumber:int, chapterNumber:int, chapter:Chapter):
+    updated = update_chapter_by_chapter_id(novel_alt, volumeNumber, chapterNumber, chapter)
+    if updated:
+        updated_chapter = read_chapter_by_chapter_id(novel_alt, volumeNumber, chapterNumber)
+        updated_chapter["volumeId"] = str(updated_chapter["volumeId"])
+        updated_chapter["_id"] = str(updated_chapter["_id"])
+        return updated_chapter
+    raise HTTPException(status_code=404, detail="Resource not found")
+
+# delete chapter
+@app.delete("/novel/{novel_alt}/volume/{volumeNumber}/chapter/{chapterNumber}", response_model=dict)
+async def delete_chapter_by_id_endpoint(novel_alt:str, volumeNumber:int, chapterNumber:int):
+    deleted = delete_chapter_by_chapter_id(novel_alt, volumeNumber, chapterNumber)
+    if deleted:
+        return {"status": "success", "message": f"Chapter {chapterNumber} of Volume {volumeNumber} in Novel {novel_alt} deleted."}
+    raise HTTPException(status_code=404, detail="Resource not found")
 
 
 ### VOLUME
@@ -44,8 +88,6 @@ async def delete_volume_by_novel_and_volume_endpoint(novel_alt: str, volumeNumbe
     if deleted:
         return {"status": "success", "message": f"Volume {volumeNumber} of Novel {novel_alt} deleted."}
     raise HTTPException(status_code=404, detail="Volume not found or couldn't be deleted")
-
-
 
 
 ### NOVEL
