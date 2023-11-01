@@ -7,21 +7,36 @@ from pydantic import BaseModel
 from database import db
 from bson import ObjectId
 
-###
 import re
 from slugify import slugify
 
-# db schemas
+
+### DB SCHEMA
 class Novel(BaseModel):
     title: str
     noOfVolumes: int
     imageURL: str
+    malLink: str
     rank: int
     trend: int
 
 class NovelInDB(Novel):
     _id: str
 
+
+### MAIN
+# read all novels
+def read_all_novels():
+    novels_cursor = db.novelCollection.find()
+    novels = []
+
+    for novel in novels_cursor:
+        novel["_id"] = str(novel["_id"])
+        novels.append(novel)
+    return novels
+
+
+### CRUD
 # create novel
 def create_novel(novel: Novel):
     alt_value = slugify(novel.title)
@@ -55,7 +70,7 @@ def delete_novel_by_alt(alt: str):
     return result.deleted_count > 0
 
 
-### Helper Fn
+### HELPER
 
 def ensure_unique_alt(alt: str) -> str:
     """

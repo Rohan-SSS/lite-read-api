@@ -1,10 +1,41 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+
+from typing import List
+
 from crud.crud_novel import *
 from crud.crud_volume import *
 from crud.crud_chapter import *
 from crud.crud_page import *
 
 app = FastAPI()
+
+### CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+### MAIN
+# read all novels
+@app.get("/novels", response_model=List[NovelInDB])
+async def read_all_novels_endpoint():
+    novels = read_all_novels()
+    if novels:
+        return novels
+    raise HTTPException(status_code=404, detail="Resource not found")
+
+# read all volumes
+@app.get("/novel/{novel_alt}/volumes", response_model=List[VolumeInDB])
+async def read_all_volumes_endpoint(novel_alt:str):
+    volumes = read_all_volumes(novel_alt)
+    if volumes:
+        return volumes
+    raise HTTPException(status_code=404, detail="Resource not found")
 
 
 ### PAGE

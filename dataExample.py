@@ -5,6 +5,7 @@ novel_collection = {
   "title": "novelTitle",
   "noOfVolumes": "number",
   "imageURL":"link",
+  "malLink":"link",
   "alt":"novelTitleSluged",
   "rank":"number",
   "trend":"number"

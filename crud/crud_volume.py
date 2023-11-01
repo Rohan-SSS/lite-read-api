@@ -3,7 +3,7 @@ from database import db
 from bson import ObjectId
 
 
-# db schemas
+### DB SCHEMA
 class Volume(BaseModel):
     novelId: str
     volumeNumber: int
@@ -12,7 +12,19 @@ class Volume(BaseModel):
 class VolumeInDB(Volume):
     _id: str
 
+### MAIN
+def read_all_volumes(novel_alt:str):
+    novel = db.novelCollection.find_one({"alt": novel_alt})
+    volumes_cursor = db.volumeCollection.find({"novelId":ObjectId(novel["_id"])})
+    volumes = []
+    for volume in volumes_cursor:
+        volume["_id"] = str(volume["_id"])
+        volume["novelId"] = str(volume["novelId"])
+        volumes.append(volume)
+    return volumes
 
+
+### CRUD
 # create volume
 def create_volume(novelId: str, volume: Volume):
     volume_dict = volume.dict()
