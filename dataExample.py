@@ -18,6 +18,16 @@ volumes_collection={
   "noOfChapters": "number"
 }
 
+rawChapterCollection = {
+  "_id":ObjectId("someId2"),
+  "volumeId":ObjectId("someId1"),
+  "rawChaptersVolumeNumber":"number",
+  "chapters":{
+    "1":"raw content",
+    "2":"raw content",
+  }
+}
+
 chpaters_volume={
   "_id": ObjectId("someId3"),
   "volumeId": ObjectId("someId2"),

@@ -7,6 +7,7 @@ from crud.crud_novel import *
 from crud.crud_volume import *
 from crud.crud_chapter import *
 from crud.crud_page import *
+from crud.crud_raw_chapter import *
 
 app = FastAPI()
 
@@ -84,8 +85,31 @@ async def delete_page_by_id_endpoint(novel_alt:str, volumeNumber:int, chapterNum
     raise HTTPException(status_code=404, detail="Page not found or couldn't be deleted")
 
 
+### RAW CHAPTER
+@app.post("/novel/{novel_alt}/volume/{volumeNumber}/raw_chapter", response_model=RawChapter)
+async def create_raw_chapter_endpoint(novel_alt:str, volumeNumber: int, raw_chapter:RawChapter):
+    novel = db.novelCollection.find_one({"alt": novel_alt})
+    if not novel:
+        raise HTTPException(status_code=404, detail="Novel Not Found")
+    volume = db.volumeCollection.find_one({"novelId":ObjectId(novel["_id"]), "volumeNumber": volumeNumber})
+    if not volume:
+        raise HTTPException(status_code=404, detail="Volume Not Found")
+    created_raw_chapter = create_raw_chapter(str(volume["_id"]), raw_chapter)
+    return created_raw_chapter
+
+@app.get("/novel/{novel_alt}/volume/{volumeNumber}/raw_chapter/", response_model=RawChapterInDB)
+async def read_raw_chapter_endpoint(novel_alt:str, volumeNumber:int):
+    raw_chapter = read_raw_chapter_by_volume_id(novel_alt, volumeNumber)
+    if raw_chapter:
+        raw_chapter["_id"] = str(raw_chapter["_id"])
+        raw_chapter["volumeId"] = str(raw_chapter["volumeId"])
+        return raw_chapter
+    raise HTTPException(status_code=404, detail="Resource not found")
+
+
 ### CHAPTER
-# create chapter
+
+# create chapter, when creating chapter number of chapters in volume collection needs to be updated
 @app.post("/novel/{novel_alt}/volume/{volumeNumber}/chapter", response_model=Chapter)
 async def create_chapter_endpoint(novel_alt: str, volumeNumber: int, chapter: Chapter):
     novel = db.novelCollection.find_one({"alt": novel_alt})
