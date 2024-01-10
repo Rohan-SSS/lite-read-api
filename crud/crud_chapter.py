@@ -1,17 +1,6 @@
-from pydantic import BaseModel
-from database import db
+from models.database import db
+from models.models import Chapter
 from bson import ObjectId
-
-
-# db schmea
-class Chapter(BaseModel):
-  volumeId: str
-  chapterNumber: int
-  noOfPages: int
-
-class ChapterInDB(Chapter):
-  _id: str
-
 
 # create chapter
 def create_chapter(volumeId: str, chapter: Chapter):

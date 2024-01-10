@@ -1,28 +1,7 @@
-### NOTE
-# For admin controls a different api needed
-# update needs all fields
-
-
-from pydantic import BaseModel
-from database import db
+from models.database import db
 from bson import ObjectId
-
-import re
 from slugify import slugify
-
-
-### DB SCHEMA
-class Novel(BaseModel):
-    title: str
-    noOfVolumes: int
-    imageURL: str
-    malLink: str
-    rank: int
-    trend: int
-
-class NovelInDB(Novel):
-    _id: str
-
+from models.models import Novel
 
 ### MAIN
 # read all novels
@@ -34,7 +13,6 @@ def read_all_novels():
         novel["_id"] = str(novel["_id"])
         novels.append(novel)
     return novels
-
 
 ### CRUD
 # create novel

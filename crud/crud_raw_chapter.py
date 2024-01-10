@@ -1,19 +1,7 @@
-from pydantic import BaseModel
-from database import db
+from models.database import db
 from bson import ObjectId
-from typing import Dict, Union
-# db schema
+from models.models import RawChapter
 
-class Content(BaseModel):
-    raw_content: str
-
-class RawChapter(BaseModel):
-  volumeId: str
-  rawChaptersVolumeNumber: int
-  chapters: Dict[str, Union[str, Content]]
-
-class RawChapterInDB(RawChapter):
-    _id:str
 
 # create raw chapter
 def create_raw_chapter(volumeId:str, raw_chapter: RawChapter):

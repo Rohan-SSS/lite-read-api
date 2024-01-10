@@ -1,16 +1,6 @@
-from pydantic import BaseModel
-from database import db
+from models.database import db
+from models.models import Page
 from bson import ObjectId
-
-
-# db schema
-class Page(BaseModel):
-    chapterId: str
-    pageNumber: int
-    content: str
-
-class PageInDB(Page):
-    _id: str
 
 
 # create page

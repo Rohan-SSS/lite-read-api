@@ -1,13 +1,16 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-
+from bson import ObjectId
 from typing import List
+from models.database import db
 
-from crud.crud_novel import *
-from crud.crud_volume import *
-from crud.crud_chapter import *
-from crud.crud_page import *
-from crud.crud_raw_chapter import *
+from crud.crud_novel import read_all_novels, read_novel_by_alt, read_novel_by_id, create_novel, update_novel_by_alt, delete_novel_by_alt
+from crud.crud_volume import read_all_volumes, create_volume, read_volume_by_novel_and_volume, update_volume_by_novel_and_volume, delete_volume_by_novel_and_volume
+from crud.crud_chapter import create_chapter, read_chapter_by_chapter_id, update_chapter_by_chapter_id, delete_chapter_by_chapter_id
+from crud.crud_page import create_page, read_page_by_id, update_page_by_id, delete_page_by_id
+from crud.crud_raw_chapter import create_raw_chapter, read_raw_chapter_by_volume_id
+
+from models.models import Novel, NovelInDB, Volume, VolumeInDB, Chapter, ChapterInDB, Page, PageInDB, RawChapter, RawChapterInDB
 
 app = FastAPI()
 
@@ -41,7 +44,7 @@ async def read_all_volumes_endpoint(novel_alt:str):
 
 ### PAGE
 # create page
-@app.post("/novel/{novel_alt}/volume/{volumeNumber}/chapter/{chapterNumber}/page", response_model=Page)
+@app.post("/novel/{novel_alt}/{volumeNumber}/{chapterNumber}/page", response_model=Page)
 async def create_page_endpoint(novel_alt: str, volumeNumber: int, chapterNumber: int, page: Page):
     novel = db.novelCollection.find_one({"alt": novel_alt})
     if not novel:
@@ -56,7 +59,7 @@ async def create_page_endpoint(novel_alt: str, volumeNumber: int, chapterNumber:
     return created_page
 
 # read page
-@app.get("/novel/{novel_alt}/volume/{volumeNumber}/chapter/{chapterNumber}/page/{pageNumber}", response_model=PageInDB)
+@app.get("/novel/{novel_alt}/{volumeNumber}/{chapterNumber}/{pageNumber}", response_model=PageInDB)
 async def read_page_by_id_endpoint(novel_alt: str, volumeNumber:int, chapterNumber:int, pageNumber:int):
     page = read_page_by_id(novel_alt, volumeNumber, chapterNumber, pageNumber)
     if page:
@@ -66,7 +69,7 @@ async def read_page_by_id_endpoint(novel_alt: str, volumeNumber:int, chapterNumb
     raise HTTPException(status_code=404, detail="Page not found")
 
 # update page
-@app.put("/novel/{novel_alt}/volume/{volumeNumber}/chapter/{chapterNumber}/page/{pageNumber}", response_model=Page)
+@app.put("/novel/{novel_alt}/{volumeNumber}/{chapterNumber}/{pageNumber}", response_model=Page)
 async def update_page_by_id_endpoint(novel_alt:str, volumeNumber:int, chapterNumber:int, pageNumber:int, page:Page):
     updated = update_page_by_id(novel_alt, volumeNumber, chapterNumber, pageNumber, page)
     if updated:
@@ -77,7 +80,7 @@ async def update_page_by_id_endpoint(novel_alt:str, volumeNumber:int, chapterNum
     raise HTTPException(status_code=404, detail="Page not found or couldn't be updated")
 
 # delete page
-@app.delete("/novel/{novel_alt}/volume/{volumeNumber}/chapter/{chapterNumber}/page/{pageNumber}", response_model=dict)
+@app.delete("/novel/{novel_alt}/{volumeNumber}/{chapterNumber}/{pageNumber}", response_model=dict)
 async def delete_page_by_id_endpoint(novel_alt:str, volumeNumber:int, chapterNumber:int, pageNumber:int):
     deleted = delete_page_by_id(novel_alt, volumeNumber, chapterNumber, pageNumber)
     if deleted:
@@ -86,7 +89,7 @@ async def delete_page_by_id_endpoint(novel_alt:str, volumeNumber:int, chapterNum
 
 
 ### RAW CHAPTER
-@app.post("/novel/{novel_alt}/volume/{volumeNumber}/raw_chapter", response_model=RawChapter)
+@app.post("/novel/{novel_alt}/{volumeNumber}/raw_chapter", response_model=RawChapter)
 async def create_raw_chapter_endpoint(novel_alt:str, volumeNumber: int, raw_chapter:RawChapter):
     novel = db.novelCollection.find_one({"alt": novel_alt})
     if not novel:
@@ -97,7 +100,7 @@ async def create_raw_chapter_endpoint(novel_alt:str, volumeNumber: int, raw_chap
     created_raw_chapter = create_raw_chapter(str(volume["_id"]), raw_chapter)
     return created_raw_chapter
 
-@app.get("/novel/{novel_alt}/volume/{volumeNumber}/raw_chapter/", response_model=RawChapterInDB)
+@app.get("/novel/{novel_alt}/{volumeNumber}/raw_chapter/", response_model=RawChapterInDB)
 async def read_raw_chapter_endpoint(novel_alt:str, volumeNumber:int):
     raw_chapter = read_raw_chapter_by_volume_id(novel_alt, volumeNumber)
     if raw_chapter:
@@ -110,7 +113,7 @@ async def read_raw_chapter_endpoint(novel_alt:str, volumeNumber:int):
 ### CHAPTER
 
 # create chapter, when creating chapter number of chapters in volume collection needs to be updated
-@app.post("/novel/{novel_alt}/volume/{volumeNumber}/chapter", response_model=Chapter)
+@app.post("/novel/{novel_alt}/{volumeNumber}/chapter", response_model=Chapter)
 async def create_chapter_endpoint(novel_alt: str, volumeNumber: int, chapter: Chapter):
     novel = db.novelCollection.find_one({"alt": novel_alt})
     if not novel:
@@ -122,7 +125,7 @@ async def create_chapter_endpoint(novel_alt: str, volumeNumber: int, chapter: Ch
     return created_chapter
 
 # read chapter
-@app.get("/novel/{novel_alt}/volume/{volumeNumber}/chapter/{chapterNumber}", response_model=ChapterInDB)
+@app.get("/novel/{novel_alt}/{volumeNumber}/{chapterNumber}", response_model=ChapterInDB)
 async def read_chapter_by_id_endpoint(novel_alt: str, volumeNumber:int, chapterNumber:int):
     chapter = read_chapter_by_chapter_id(novel_alt, volumeNumber, chapterNumber)
     if chapter:
@@ -132,7 +135,7 @@ async def read_chapter_by_id_endpoint(novel_alt: str, volumeNumber:int, chapterN
     raise HTTPException(status_code=404, detail="Resource not found")
 
 # update chapter
-@app.put("/novel/{novel_alt}/volume/{volumeNumber}/chapter/{chapterNumber}", response_model=Chapter)
+@app.put("/novel/{novel_alt}/{volumeNumber}/{chapterNumber}", response_model=Chapter)
 async def update_chapter_by_id_endpoint(novel_alt:str, volumeNumber:int, chapterNumber:int, chapter:Chapter):
     updated = update_chapter_by_chapter_id(novel_alt, volumeNumber, chapterNumber, chapter)
     if updated:
@@ -143,7 +146,7 @@ async def update_chapter_by_id_endpoint(novel_alt:str, volumeNumber:int, chapter
     raise HTTPException(status_code=404, detail="Resource not found")
 
 # delete chapter
-@app.delete("/novel/{novel_alt}/volume/{volumeNumber}/chapter/{chapterNumber}", response_model=dict)
+@app.delete("/novel/{novel_alt}/{volumeNumber}/{chapterNumber}", response_model=dict)
 async def delete_chapter_by_id_endpoint(novel_alt:str, volumeNumber:int, chapterNumber:int):
     deleted = delete_chapter_by_chapter_id(novel_alt, volumeNumber, chapterNumber)
     if deleted:
@@ -153,7 +156,7 @@ async def delete_chapter_by_id_endpoint(novel_alt:str, volumeNumber:int, chapter
 
 ### VOLUME
 # create volume
-@app.post("/novel/{novel_alt}/volume/", response_model=Volume)
+@app.post("/novel/{novel_alt}/", response_model=Volume)
 async def create_volume_endpoint(novel_alt: str, volume: Volume):
     novel = db.novelCollection.find_one({"alt": novel_alt})
     if not novel:
@@ -163,7 +166,7 @@ async def create_volume_endpoint(novel_alt: str, volume: Volume):
     return created_volume
 
 # read volume by novel's alt and volumeNumber
-@app.get("/novel/{novel_alt}/volume/{volumeNumber}", response_model=VolumeInDB)
+@app.get("/novel/{novel_alt}/{volumeNumber}", response_model=VolumeInDB)
 async def read_volume_by_novel_and_volume_endpoint(novel_alt: str, volumeNumber: int):
     volume = read_volume_by_novel_and_volume(novel_alt, volumeNumber)
     if volume:
@@ -173,7 +176,7 @@ async def read_volume_by_novel_and_volume_endpoint(novel_alt: str, volumeNumber:
     raise HTTPException(status_code=404, detail="Volume not found")
 
 # update volume by novel's alt and volumeNumber
-@app.put("/novel/{novel_alt}/volume/{volumeNumber}", response_model=Volume)
+@app.put("/novel/{novel_alt}/{volumeNumber}", response_model=Volume)
 async def update_volume_by_novel_and_volume_endpoint(novel_alt: str, volumeNumber: int, volume: Volume):
     updated = update_volume_by_novel_and_volume(novel_alt, volumeNumber, volume)
     if updated:
@@ -184,7 +187,7 @@ async def update_volume_by_novel_and_volume_endpoint(novel_alt: str, volumeNumbe
     raise HTTPException(status_code=404, detail="Volume not found or couldn't be updated")
 
 # delete volume by novel's alt and volumeNumber
-@app.delete("/novel/{novel_alt}/volume/{volumeNumber}", response_model=dict)
+@app.delete("/novel/{novel_alt}/{volumeNumber}", response_model=dict)
 async def delete_volume_by_novel_and_volume_endpoint(novel_alt: str, volumeNumber: int):
     deleted = delete_volume_by_novel_and_volume(novel_alt, volumeNumber)
     if deleted:

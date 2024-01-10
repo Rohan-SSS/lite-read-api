@@ -1,16 +1,7 @@
-from pydantic import BaseModel
-from database import db
+from models.database import db
+from models.models import Volume
 from bson import ObjectId
 
-
-### DB SCHEMA
-class Volume(BaseModel):
-    novelId: str
-    volumeNumber: int
-    noOfChapters: int
-
-class VolumeInDB(Volume):
-    _id: str
 
 ### MAIN
 def read_all_volumes(novel_alt:str):
